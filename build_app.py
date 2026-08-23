@@ -1,18 +1,27 @@
 import json
 import os
+import csv
 import psycopg
 
 WEB_DIR = r"C:\temp\opensource-hunter-web"
 DB_URL = "postgresql://postgres:postgres@localhost:5432/reporadar"
 
-# 1. Carrega as 560 ferramentas curadas originais
+# 1. Carrega as ferramentas curadas originais
 tools_path = os.path.join(WEB_DIR, "tools.json")
 with open(tools_path, "r", encoding="utf-8") as f:
     curated_tools = json.load(f)
 
-print(f"[1/4] Ferramentas Curadas Carregadas: {len(curated_tools)}")
+# Filtra para ter apenas itens unicos
+seen_names = set()
+curated_unique = []
+for t in curated_tools:
+    if t["nome"] not in seen_names:
+        seen_names.add(t["nome"])
+        curated_unique.append(t)
 
-# 2. Busca os repositórios do PostgreSQL local
+print(f"[1/4] Ferramentas Curadas Unicas: {len(curated_unique)}")
+
+# 2. Busca os repositorios do PostgreSQL local
 pg_tools = []
 try:
     with psycopg.connect(DB_URL) as conn:
@@ -27,40 +36,42 @@ try:
             rows = cur.fetchall()
             for row in rows:
                 name, desc, stars, url, lang = row
-                pg_tools.append({
-                    "nome": name,
-                    "caso_uso": desc[:280].strip(),
-                    "origem": "Índice Global GitHub",
-                    "link_ig": None,
-                    "github_search": url or f"https://github.com/{name}",
-                    "estrelas": int(stars or 0),
-                    "linguagem": lang or "N/A"
-                })
-    print(f"[2/4] Repositórios Únicos do PostgreSQL: {len(pg_tools)}")
+                if name not in seen_names:
+                    seen_names.add(name)
+                    pg_tools.append({
+                        "nome": name,
+                        "caso_uso": desc[:280].strip(),
+                        "origem": "Indice Global GitHub",
+                        "link_ig": None,
+                        "github_search": url or f"https://github.com/{name}",
+                        "estrelas": int(stars or 0),
+                        "linguagem": lang or "N/A"
+                    })
+    print(f"[2/4] Repositorios Unicos do PostgreSQL: {len(pg_tools)}")
 except Exception as e:
     print(f"Aviso ao ler PostgreSQL: {e}")
 
 # 3. Categorizador Inteligente
 def categorizar(nome, caso_uso):
     texto = (nome + " " + (caso_uso or "")).lower()
-    if any(k in texto for k in ["mcp", "code", "coding", "turborepo", "strix", "cli", "terminal", "ide", "programação", "pentest", "desenvolvedor", "compiler", "parser", "typescript", "rust"]):
+    if any(k in texto for k in ["mcp", "code", "coding", "turborepo", "strix", "cli", "terminal", "ide", "programacao", "pentest", "desenvolvedor", "compiler", "parser", "typescript", "rust"]):
         return "Dev, Coding & MCP", "💻"
-    elif any(k in texto for k in ["agent", "agente", "multi-agent", "mirofish", "miroshark", "deerflow", "eigent", "openworker", "conway", "langchain", "langsmith", "orquestração", "swarm"]):
+    elif any(k in texto for k in ["agent", "agente", "multi-agent", "mirofish", "miroshark", "deerflow", "eigent", "openworker", "conway", "langchain", "langsmith", "orquestracao", "swarm"]):
         return "Multi-Agentes & Frameworks", "🤖"
-    elif any(k in texto for k in ["tts", "audio", "áudio", "voz", "voxtral", "elevenlabs", "pocket tts", "kyutai", "deepgram", "livekit", "fala", "speech", "asr", "whisper"]):
-        return "Voz, Áudio & TTS", "🎙️"
-    elif any(k in texto for k in ["video", "vídeo", "3d", "sam 3d", "vision", "imagem", "veo", "imagine", "luma", "openart", "pika", "lingbot", "avatar", "render", "blender", "cad", "gis", "map"]):
-        return "Vídeo, Visão, 3D & GIS", "👁️"
-    elif any(k in texto for k in ["crawlee", "scrape", "scraping", "n8n", "zapier", "pipefy", "workflow", "automação", "apify", "crawler", "bot", "fluxo", "automation"]):
-        return "Automação & Scraping", "⚡"
-    elif any(k in texto for k in ["ads", "marketing", "meta ads", "vendas", "funil", "tráfego", "lead", "negócio", "imobiliário", "receita", "sms", "crm", "real estate"]):
-        return "Marketing, CRM & Negócios", "📈"
+    elif any(k in texto for k in ["tts", "audio", "audio", "voz", "voxtral", "elevenlabs", "pocket tts", "kyutai", "deepgram", "livekit", "fala", "speech", "asr", "whisper"]):
+        return "Voz, Audio & TTS", "🎙️"
+    elif any(k in texto for k in ["video", "video", "3d", "sam 3d", "vision", "imagem", "veo", "imagine", "luma", "openart", "pika", "lingbot", "avatar", "render", "blender", "cad", "gis", "map"]):
+        return "Video, Visao, 3D & GIS", "👁️"
+    elif any(k in texto for k in ["crawlee", "scrape", "scraping", "n8n", "zapier", "pipefy", "workflow", "automacao", "apify", "crawler", "bot", "fluxo", "automation"]):
+        return "Automacao & Scraping", "⚡"
+    elif any(k in texto for k in ["ads", "marketing", "meta ads", "vendas", "funil", "trafego", "lead", "negocio", "imobiliario", "receita", "sms", "crm", "real estate"]):
+        return "Marketing, CRM & Negocios", "📈"
     elif any(k in texto for k in ["llm", "claude", "gemini", "kimi", "qwen", "glm", "openrouter", "airllm", "perplexity", "deepseek", "mistral", "anthropic", "gpt", "model", "embedding", "vector", "transformer"]):
         return "Modelos LLM & IA", "🧠"
     else:
         return "Geral & Produtividade", "🛠️"
 
-for t in curated_tools:
+for t in curated_unique:
     cat, emoji = categorizar(t["nome"], t.get("caso_uso", ""))
     t["categoria"] = cat
     t["emoji"] = emoji
@@ -73,14 +84,13 @@ for t in pg_tools:
     t["categoria"] = cat
     t["emoji"] = emoji
 
-merged_tools = curated_tools + pg_tools
+merged_tools = curated_unique + pg_tools
 print(f"[3/4] Total Combinado de Ferramentas: {len(merged_tools)}")
 
 # Salva tools.json e CSV
 with open(os.path.join(WEB_DIR, "tools.json"), "w", encoding="utf-8") as f:
     json.dump(merged_tools, f, ensure_ascii=False)
 
-import csv
 with open(os.path.join(WEB_DIR, "catalogo_mobile.csv"), "w", encoding="utf-8-sig", newline="") as f:
     writer = csv.writer(f)
     writer.writerow(["Nome", "Caso de Uso", "Categoria", "Linguagem", "Estrelas", "Origem", "Link Instagram", "GitHub / URL"])
@@ -98,14 +108,14 @@ with open(os.path.join(WEB_DIR, "catalogo_mobile.csv"), "w", encoding="utf-8-sig
 
 tools_json_str = json.dumps(merged_tools, ensure_ascii=False)
 
-# 4. Gera index.html de Alta Performance com Paginação Infinita
+# 4. Gera index.html Completo com Auto-Complete, Audio In/Out e Scroll de Categorias
 html_code = f"""<!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenSource Hunter | Rodrigo Borin</title>
-    <meta name="description" content="Catálogo Mestre e Motor de Busca de {len(merged_tools):,} Ferramentas Open Source e Inteligência Artificial por Rodrigo Borin.">
+    <meta name="description" content="Catalogo Mestre e Motor de Busca de {len(merged_tools):,} Ferramentas Open Source e IA com Audio e Auto-Complete por Rodrigo Borin.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -142,19 +152,31 @@ html_code = f"""<!DOCTYPE html>
         }}
     </script>
     <style>
-        .no-scrollbar::-webkit-scrollbar {{ display: none; }}
-        .no-scrollbar {{ -ms-overflow-style: none; scrollbar-width: none; }}
+        .custom-scroll::-webkit-scrollbar {{ height: 6px; }}
+        .custom-scroll::-webkit-scrollbar-track {{ background: rgba(15, 23, 42, 0.6); border-radius: 9999px; }}
+        .custom-scroll::-webkit-scrollbar-thumb {{ background: rgba(99, 102, 241, 0.4); border-radius: 9999px; }}
+        .custom-scroll::-webkit-scrollbar-thumb:hover {{ background: rgba(99, 102, 241, 0.8); }}
         .glass-panel {{
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
+        }}
+        @keyframes pulse-ring {{
+            0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }}
+            70% {{ transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }}
+            100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }}
+        }}
+        .mic-active {{
+            animation: pulse-ring 1.5s infinite;
+            background-color: #ef4444 !important;
+            color: #ffffff !important;
         }}
     </style>
 </head>
 <body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
 
     <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-50 glass-panel border-b border-dark-800 px-4 py-3 sm:px-6">
+    <header class="sticky top-0 z-50 glass-panel border-b border-dark-800 px-4 py-3 sm:px-6 shadow-xl">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
@@ -163,7 +185,7 @@ html_code = f"""<!DOCTYPE html>
                 <div>
                     <div class="flex items-center space-x-2">
                         <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white">OpenSource Hunter</h1>
-                        <span class="text-[10px] uppercase font-bold tracking-widest bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full">v2.5 Mega</span>
+                        <span class="text-[10px] uppercase font-bold tracking-widest bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full">v2.6 Voice & Search</span>
                     </div>
                     <p class="text-xs text-slate-400 font-medium">rodrigoborin.com • <span class="text-emerald-400 font-semibold" id="totalHeaderCount">{len(merged_tools):,} Ferramentas</span></p>
                 </div>
@@ -183,26 +205,51 @@ html_code = f"""<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="max-w-7xl mx-auto mt-3" id="searchBarContainer">
+        <!-- Search Bar com Auto-Complete e Audio IN (Microfone) -->
+        <div class="max-w-7xl mx-auto mt-3 relative" id="searchBarContainer">
             <div class="relative flex items-center">
-                <input type="text" id="mainSearchInput" placeholder="Buscar entre {len(merged_tools):,} ferramentas por nome, caso de uso, LLM, MCP, Python, Rust..." 
-                    class="w-full bg-dark-900 border border-dark-750 text-white placeholder-slate-400 text-sm sm:text-base rounded-xl pl-11 pr-24 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition shadow-inner">
+                <input type="text" id="mainSearchInput" autocomplete="off" placeholder="Fale ou digite (ex: AI agent, scrapers, FastAPI, CRM, Rust, TTS)..." 
+                    class="w-full bg-dark-900 border border-dark-750 text-white placeholder-slate-400 text-sm sm:text-base rounded-xl pl-11 pr-32 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition shadow-inner">
                 <div class="absolute left-3.5 text-slate-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-xs bg-dark-750 hover:bg-dark-700 text-slate-300 px-2.5 py-1.5 rounded-lg transition font-medium">
-                    Limpar
-                </button>
+                
+                <!-- Controles Direita: Microfone (Audio In) + Limpar -->
+                <div class="absolute right-2.5 flex items-center space-x-1.5">
+                    <button onclick="toggleVoiceSearch()" id="voiceSearchBtn" class="bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-dark-700 transition flex items-center gap-1.5 shadow-sm" title="Pesquisar por Voz (Audio IN)">
+                        <span id="micIcon" class="text-sm">🎙️</span>
+                        <span id="micLabel" class="hidden sm:inline">Voz</span>
+                    </button>
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden text-xs bg-dark-750 hover:bg-dark-700 text-slate-300 px-2.5 py-1.5 rounded-lg transition font-medium">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dropdown do Auto-Complete -->
+            <div id="autocompleteDropdown" class="absolute top-full left-0 right-0 mt-1.5 bg-dark-900 border border-dark-750 rounded-2xl shadow-2xl overflow-hidden z-50 hidden">
+                <div id="autocompleteList" class="max-h-80 overflow-y-auto divide-y divide-dark-800 text-xs">
+                    <!-- Sugestoes injetadas dinamicamente -->
+                </div>
             </div>
         </div>
 
-        <!-- Category Pills -->
-        <div class="max-w-7xl mx-auto mt-3 flex space-x-2 overflow-x-auto no-scrollbar pb-1 text-xs" id="categoryPillBar">
-            <button onclick="filterCategory('TODAS')" class="cat-pill active px-3.5 py-2 rounded-xl bg-brand-600 text-white whitespace-nowrap font-semibold transition shadow-sm">
-                Todas ({len(merged_tools):,})
+        <!-- Category Bar com Botoes de Scroll Lateral (< e >) e Suporte a Mouse Wheel -->
+        <div class="max-w-7xl mx-auto mt-3 relative flex items-center" id="categoryNavWrapper">
+            <button onclick="scrollCategories(-250)" class="z-10 bg-dark-900/90 hover:bg-dark-800 text-slate-300 hover:text-white border border-dark-750 p-2 rounded-xl text-xs font-bold mr-1.5 shadow-lg hidden sm:flex items-center justify-center" title="Rolar para esquerda">
+                ◀
+            </button>
+
+            <div class="flex-1 flex space-x-2 overflow-x-auto custom-scroll pb-2 pt-0.5 text-xs select-none" id="categoryPillBar">
+                <button onclick="filterCategory('TODAS')" class="cat-pill active px-4 py-2 rounded-xl bg-brand-600 text-white whitespace-nowrap font-semibold transition shadow-sm flex-shrink-0">
+                    Todas ({len(merged_tools):,})
+                </button>
+            </div>
+
+            <button onclick="scrollCategories(250)" class="z-10 bg-dark-900/90 hover:bg-dark-800 text-slate-300 hover:text-white border border-dark-750 p-2 rounded-xl text-xs font-bold ml-1.5 shadow-lg hidden sm:flex items-center justify-center" title="Rolar para direita">
+                ▶
             </button>
         </div>
     </header>
@@ -214,9 +261,15 @@ html_code = f"""<!DOCTYPE html>
         <section id="catalogoSection">
             <div class="flex items-center justify-between text-xs text-slate-400 mb-4 px-1">
                 <span id="resultsInfo" class="font-medium">Carregando acervo...</span>
-                <div class="flex items-center space-x-2">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="text-slate-400">Sincronizado: PostgreSQL + Instagram + GitHub</span>
+                <div class="flex items-center space-x-3">
+                    <span id="audioPlayingIndicator" class="hidden items-center gap-1.5 bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
+                        <span>🔊</span> Falando...
+                        <button onclick="stopAudio()" class="ml-1 text-slate-400 hover:text-white font-bold">✕</button>
+                    </span>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-slate-400">PostgreSQL + Instagram + GitHub</span>
+                    </div>
                 </div>
             </div>
 
@@ -237,7 +290,7 @@ html_code = f"""<!DOCTYPE html>
                 <h2 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
                     <span>🌐</span> OpenSource Hunter Live Radar
                 </h2>
-                <p class="text-xs text-slate-400 mb-4">Pesquise diretamente em tempo real em mais de 200 milhões de repositórios do GitHub.</p>
+                <p class="text-xs text-slate-400 mb-4">Pesquise diretamente em tempo real em mais de 200 milhoes de repositorios do GitHub.</p>
                 <div class="flex gap-2">
                     <input type="text" id="githubQueryInput" placeholder="Ex: AI agent, MCP server, web scraper, computer vision, GIS..."
                         class="flex-1 bg-dark-950 border border-dark-750 text-white text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -259,7 +312,7 @@ html_code = f"""<!DOCTYPE html>
                     <span>📓</span> Obsidian Vault Exporter
                 </h2>
                 <p class="text-sm text-slate-300 mb-4 leading-relaxed">
-                    Exporte o acervo mestre de <strong>{len(merged_tools):,} ferramentas e repositórios</strong> estruturados com metadados, tags e links direto para o seu Obsidian Vault.
+                    Exporte o acervo mestre de <strong>{len(merged_tools):,} ferramentas e repositorios</strong> estruturados com metadados, tags e links direto para o seu Obsidian Vault.
                 </p>
                 <div class="flex flex-wrap gap-3">
                     <a href="/catalogo_mobile.csv" download class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-600/20">
@@ -275,7 +328,7 @@ html_code = f"""<!DOCTYPE html>
 
     </main>
 
-    <!-- Modal de Exportação de Nota Obsidian -->
+    <!-- Modal de Exportacao de Nota Obsidian com Botao de Voz (Audio Out) -->
     <div id="obsidianModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-dark-900 border border-dark-750 w-full max-w-2xl rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
             <div class="flex items-center justify-between pb-3 border-b border-dark-800">
@@ -283,10 +336,15 @@ html_code = f"""<!DOCTYPE html>
                     <span class="text-2xl">📓</span>
                     <div>
                         <h3 class="font-bold text-white text-base" id="modalToolName">Nome da Ferramenta</h3>
-                        <p class="text-xs text-brand-400">Nota Técnica Formatada para Obsidian</p>
+                        <p class="text-xs text-brand-400">Nota Tecnica Formatada para Obsidian</p>
                     </div>
                 </div>
-                <button onclick="closeObsidianModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="speakSelectedTool()" id="modalSpeakBtn" class="bg-dark-800 hover:bg-dark-750 text-brand-400 text-xs font-semibold px-3 py-1.5 rounded-lg border border-dark-700 transition flex items-center gap-1">
+                        <span>🔊</span> Ouvir
+                    </button>
+                    <button onclick="closeObsidianModal()" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
+                </div>
             </div>
             
             <div class="my-4 flex-1 overflow-y-auto bg-dark-950 p-4 rounded-xl border border-dark-800">
@@ -310,7 +368,7 @@ html_code = f"""<!DOCTYPE html>
         <p class="mt-1">Deploy automatizado via Vercel • Sincronizado com PostgreSQL Local & Obsidian</p>
     </footer>
 
-    <!-- Scripts de Interatividade e Paginação de Alta Performance -->
+    <!-- Scripts de Interatividade, Voz, Auto-Complete e Paginacao -->
     <script>
         const allTools = {tools_json_str};
         let currentTab = 'catalogo';
@@ -319,6 +377,9 @@ html_code = f"""<!DOCTYPE html>
         let currentSelectedTool = null;
         let visibleCount = 60;
         let filteredToolsCache = [];
+        let isSpeaking = false;
+        let isListening = false;
+        let recognition = null;
 
         // Categorias e contagem
         const categoryCounts = {{}};
@@ -330,12 +391,223 @@ html_code = f"""<!DOCTYPE html>
         const pillBar = document.getElementById('categoryPillBar');
         Object.keys(categoryCounts).sort().forEach(cat => {{
             const btn = document.createElement('button');
-            btn.className = "cat-pill px-3.5 py-2 rounded-xl bg-dark-900 text-slate-300 border border-dark-750 whitespace-nowrap font-medium hover:bg-dark-800 transition";
+            btn.className = "cat-pill px-4 py-2 rounded-xl bg-dark-900 text-slate-300 border border-dark-750 whitespace-nowrap font-medium hover:bg-dark-800 transition flex-shrink-0";
             btn.innerHTML = `${{cat}} (${{categoryCounts[cat].toLocaleString()}})`;
             btn.onclick = () => filterCategory(cat);
             pillBar.appendChild(btn);
         }});
 
+        // Suporte a Mouse Wheel Horizontal na barra de categorias
+        pillBar.addEventListener('wheel', (e) => {{
+            if (e.deltaY !== 0) {{
+                e.preventDefault();
+                pillBar.scrollLeft += e.deltaY * 1.5;
+            }}
+        }}, {{ passive: false }});
+
+        function scrollCategories(offset) {{
+            pillBar.scrollBy({{ left: offset, behavior: 'smooth' }});
+        }}
+
+        // ==========================================
+        // AUTO-COMPLETE NA BUSCA
+        // ==========================================
+        const searchInput = document.getElementById('mainSearchInput');
+        const dropdown = document.getElementById('autocompleteDropdown');
+        const autoList = document.getElementById('autocompleteList');
+
+        function updateAutocomplete(query) {{
+            const q = query.toLowerCase().trim();
+            if (q.length < 2) {{
+                dropdown.classList.add('hidden');
+                return;
+            }}
+
+            const nameMatches = allTools.filter(t => t.nome.toLowerCase().includes(q)).slice(0, 5);
+            const catMatches = Object.keys(categoryCounts).filter(c => c.toLowerCase().includes(q)).slice(0, 2);
+
+            if (nameMatches.length === 0 && catMatches.length === 0) {{
+                dropdown.classList.add('hidden');
+                return;
+            }}
+
+            autoList.innerHTML = '';
+
+            // Categorias sugeridas
+            catMatches.forEach(cat => {{
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-dark-800 cursor-pointer flex items-center justify-between text-slate-200 transition";
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">📁</span>
+                        <span class="font-bold text-white">${{cat}}</span>
+                    </div>
+                    <span class="text-[10px] bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full font-semibold">Categoria</span>
+                `;
+                item.onclick = () => {{
+                    filterCategory(cat);
+                    dropdown.classList.add('hidden');
+                    searchInput.value = '';
+                }};
+                autoList.appendChild(item);
+            }});
+
+            // Ferramentas sugeridas
+            nameMatches.forEach(t => {{
+                const item = document.createElement('div');
+                item.className = "p-3 hover:bg-dark-800 cursor-pointer flex items-center justify-between text-slate-200 transition";
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2 min-w-0">
+                        <span class="text-base flex-shrink-0">${{t.emoji || '🛠️'}}</span>
+                        <div class="min-w-0">
+                            <p class="font-bold text-white truncate">${{t.nome}}</p>
+                            <p class="text-[11px] text-slate-400 truncate">${{t.caso_uso || ''}}</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-dark-750 text-slate-300 px-2 py-0.5 rounded-md flex-shrink-0 ml-2 font-mono">${{t.linguagem || t.categoria}}</span>
+                `;
+                item.onclick = () => {{
+                    searchInput.value = t.nome;
+                    searchQuery = t.nome;
+                    visibleCount = 60;
+                    dropdown.classList.add('hidden');
+                    document.getElementById('clearSearchBtn').classList.remove('hidden');
+                    renderCatalogo();
+                }};
+                autoList.appendChild(item);
+            }});
+
+            dropdown.classList.remove('hidden');
+        }}
+
+        // Fecha auto-complete ao clicar fora
+        document.addEventListener('click', (e) => {{
+            if (!document.getElementById('searchBarContainer').contains(e.target)) {{
+                dropdown.classList.add('hidden');
+            }}
+        }});
+
+        // ==========================================
+        // AUDIO IN: RECONHECIMENTO DE VOZ (STT)
+        // ==========================================
+        function initSpeechRecognition() {{
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) return null;
+            
+            const rec = new SpeechRec();
+            rec.lang = 'pt-BR';
+            rec.continuous = false;
+            rec.interimResults = false;
+
+            rec.onstart = () => {{
+                isListening = true;
+                const btn = document.getElementById('voiceSearchBtn');
+                btn.classList.add('mic-active');
+                document.getElementById('micLabel').innerText = 'Ouvindo...';
+                searchInput.placeholder = 'Fale agora o que deseja buscar...';
+            }};
+
+            rec.onresult = (event) => {{
+                const transcript = event.results[0][0].transcript;
+                searchInput.value = transcript;
+                searchQuery = transcript;
+                visibleCount = 60;
+                document.getElementById('clearSearchBtn').classList.remove('hidden');
+                updateAutocomplete(transcript);
+                renderCatalogo();
+            }};
+
+            rec.onerror = (event) => {{
+                console.warn('Erro de reconhecimento de voz:', event.error);
+                stopVoiceSearch();
+            }};
+
+            rec.onend = () => {{
+                stopVoiceSearch();
+            }};
+
+            return rec;
+        }}
+
+        function toggleVoiceSearch() {{
+            if (!recognition) recognition = initSpeechRecognition();
+            if (!recognition) {{
+                alert('O reconhecimento de voz nao e suportado pelo seu navegador atual. Recomendamos o Google Chrome.');
+                return;
+            }}
+
+            if (isListening) {{
+                recognition.stop();
+                stopVoiceSearch();
+            }} else {{
+                try {{
+                    recognition.start();
+                }} catch (e) {{
+                    recognition.stop();
+                }}
+            }}
+        }}
+
+        function stopVoiceSearch() {{
+            isListening = false;
+            const btn = document.getElementById('voiceSearchBtn');
+            btn.classList.remove('mic-active');
+            document.getElementById('micLabel').innerText = 'Voz';
+            searchInput.placeholder = 'Fale ou digite (ex: AI agent, scrapers, FastAPI, CRM, Rust, TTS)...';
+        }}
+
+        // ==========================================
+        // AUDIO OUT: SINTESE DE VOZ (TTS)
+        // ==========================================
+        function speakTool(encodedJson) {{
+            const t = JSON.parse(decodeURIComponent(encodedJson));
+            stopAudio();
+
+            if (!window.speechSynthesis) {{
+                alert('A reproducao de audio nao e suportada neste navegador.');
+                return;
+            }}
+
+            const textToSpeak = `${{t.nome}}. Categoria: ${{t.categoria}}. ${{t.caso_uso || 'Sem descricao detalhada.'}}`;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.05;
+
+            utterance.onstart = () => {{
+                isSpeaking = true;
+                document.getElementById('audioPlayingIndicator').classList.remove('hidden');
+                document.getElementById('audioPlayingIndicator').classList.add('flex');
+            }};
+
+            utterance.onend = () => {{
+                stopAudio();
+            }};
+
+            utterance.onerror = () => {{
+                stopAudio();
+            }};
+
+            window.speechSynthesis.speak(utterance);
+        }}
+
+        function speakSelectedTool() {{
+            if (currentSelectedTool) {{
+                speakTool(encodeURIComponent(JSON.stringify(currentSelectedTool)));
+            }}
+        }}
+
+        function stopAudio() {{
+            if (window.speechSynthesis) {{
+                window.speechSynthesis.cancel();
+            }}
+            isSpeaking = false;
+            document.getElementById('audioPlayingIndicator').classList.add('hidden');
+            document.getElementById('audioPlayingIndicator').classList.remove('flex');
+        }}
+
+        // ==========================================
+        // NAVEGACAO E RENDERIZACAO DO CATALOGO
+        // ==========================================
         function switchTab(tab) {{
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => {{
@@ -345,12 +617,12 @@ html_code = f"""<!DOCTYPE html>
             document.getElementById('catalogoSection').classList.add('hidden');
             document.getElementById('githubSection').classList.add('hidden');
             document.getElementById('obsidianSection').classList.add('hidden');
-            document.getElementById('categoryPillBar').classList.add('hidden');
+            document.getElementById('categoryNavWrapper').classList.add('hidden');
 
             if (tab === 'catalogo') {{
                 document.getElementById('tabBtnCatalogo').className = "tab-btn px-3 py-1.5 rounded-lg bg-brand-600 text-white shadow-sm transition";
                 document.getElementById('catalogoSection').classList.remove('hidden');
-                document.getElementById('categoryPillBar').classList.remove('hidden');
+                document.getElementById('categoryNavWrapper').classList.remove('hidden');
                 document.getElementById('searchBarContainer').classList.remove('hidden');
                 renderCatalogo();
             }} else if (tab === 'github') {{
@@ -373,9 +645,9 @@ html_code = f"""<!DOCTYPE html>
             visibleCount = 60;
             document.querySelectorAll('.cat-pill').forEach(btn => {{
                 if ((cat === 'TODAS' && btn.innerText.includes('Todas')) || btn.innerText.startsWith(cat)) {{
-                    btn.className = "cat-pill active px-3.5 py-2 rounded-xl bg-brand-600 text-white whitespace-nowrap font-semibold transition shadow-sm";
+                    btn.className = "cat-pill active px-4 py-2 rounded-xl bg-brand-600 text-white whitespace-nowrap font-semibold transition shadow-sm flex-shrink-0";
                 }} else {{
-                    btn.className = "cat-pill px-3.5 py-2 rounded-xl bg-dark-900 text-slate-300 border border-dark-750 whitespace-nowrap font-medium hover:bg-dark-800 transition";
+                    btn.className = "cat-pill px-4 py-2 rounded-xl bg-dark-900 text-slate-300 border border-dark-750 whitespace-nowrap font-medium hover:bg-dark-800 transition flex-shrink-0";
                 }}
             }});
             renderCatalogo();
@@ -395,7 +667,7 @@ html_code = f"""<!DOCTYPE html>
                 return matchCat && matchSearch;
             }});
 
-            document.getElementById('resultsInfo').innerText = `Mostrando ${{Math.min(visibleCount, filteredToolsCache.length).toLocaleString()}} de ${{filteredToolsCache.length.toLocaleString()}} ferramentas encontradas`;
+            document.getElementById('resultsInfo').innerText = `Mostrando ${{Math.min(visibleCount, filteredToolsCache.length).toLocaleString()}} de ${{filteredToolsCache.length.toLocaleString()}} ferramentas`;
 
             const loadMoreBtn = document.getElementById('loadMoreContainer');
             if (filteredToolsCache.length > visibleCount) {{
@@ -409,7 +681,7 @@ html_code = f"""<!DOCTYPE html>
                     <div class="col-span-full py-16 text-center text-slate-400">
                         <div class="text-4xl mb-2">🔍</div>
                         <p class="font-bold text-base text-white">Nenhum projeto encontrado</p>
-                        <p class="text-xs text-slate-400 mt-1">Tente outros termos ou limpe o filtro de categoria.</p>
+                        <p class="text-xs text-slate-400 mt-1">Tente outros termos ou fale pelo microfone.</p>
                     </div>
                 `;
                 return;
@@ -436,6 +708,7 @@ html_code = f"""<!DOCTYPE html>
                 ` : '';
 
                 const githubUrl = t.github_search || `https://github.com/${{t.nome}}`;
+                const encodedData = encodeURIComponent(JSON.stringify(t));
 
                 card.innerHTML = `
                     <div>
@@ -446,6 +719,9 @@ html_code = f"""<!DOCTYPE html>
                             </div>
                             <div class="flex items-center space-x-1.5 flex-shrink-0">
                                 ${{starsBadge}}
+                                <button onclick="speakTool('${{encodedData}}')" class="text-slate-400 hover:text-brand-400 p-1 rounded-lg hover:bg-dark-800 transition" title="Ouvir descricao (Audio OUT)">
+                                    🔊
+                                </button>
                             </div>
                         </div>
 
@@ -455,7 +731,7 @@ html_code = f"""<!DOCTYPE html>
                         </div>
 
                         <p class="text-xs text-slate-300 leading-relaxed line-clamp-3 mb-4 font-normal">
-                            ${{t.caso_uso || 'Sem descrição detalhada.'}}
+                            ${{t.caso_uso || 'Sem descricao detalhada.'}}
                         </p>
                     </div>
 
@@ -466,7 +742,7 @@ html_code = f"""<!DOCTYPE html>
                                 <span>GitHub</span>
                             </a>
                         `}}
-                        <button onclick="openObsidianModal('${{encodeURIComponent(JSON.stringify(t))}}')" class="bg-brand-600/10 hover:bg-brand-600 text-brand-400 hover:text-white border border-brand-500/20 hover:border-transparent text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5">
+                        <button onclick="openObsidianModal('${{encodedData}}')" class="bg-brand-600/10 hover:bg-brand-600 text-brand-400 hover:text-white border border-brand-500/20 hover:border-transparent text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5">
                             <span>📓</span>
                             <span>Nota .md</span>
                         </button>
@@ -491,12 +767,14 @@ html_code = f"""<!DOCTYPE html>
             }}
         }});
 
-        // Input Search Listener com Debounce
+        // Input Search Listener com Debounce e Auto-Complete
         let searchDebounce;
-        document.getElementById('mainSearchInput').addEventListener('input', (e) => {{
+        searchInput.addEventListener('input', (e) => {{
             clearTimeout(searchDebounce);
+            const val = e.target.value;
+            updateAutocomplete(val);
             searchDebounce = setTimeout(() => {{
-                searchQuery = e.target.value;
+                searchQuery = val;
                 visibleCount = 60;
                 document.getElementById('clearSearchBtn').classList.toggle('hidden', !searchQuery);
                 renderCatalogo();
@@ -504,10 +782,11 @@ html_code = f"""<!DOCTYPE html>
         }});
 
         function clearSearch() {{
-            document.getElementById('mainSearchInput').value = '';
+            searchInput.value = '';
             searchQuery = '';
             visibleCount = 60;
             document.getElementById('clearSearchBtn').classList.add('hidden');
+            dropdown.classList.add('hidden');
             renderCatalogo();
         }}
 
@@ -538,8 +817,8 @@ data_registro: "${{new Date().toISOString().split('T')[0]}}"
 - **Estrelas GitHub:** ⭐ ${{t.estrelas || 0}}
 
 ## 🔗 Links Oficiais
-- **Repositório / Link:** [Acessar Link Oficial](${{t.github_search || 'https://github.com/' + t.nome}})
-${{t.link_ig ? '- **Post de Referência no Instagram:** [Ver Post](' + t.link_ig + ')' : ''}}
+- **Repositorio / Link:** [Acessar Link Oficial](${{t.github_search || 'https://github.com/' + t.nome}})
+${{t.link_ig ? '- **Post de Referencia no Instagram:** [Ver Post](' + t.link_ig + ')' : ''}}
 
 ---
 *Gerado automaticamente pelo OpenSource Hunter (Rodrigo Borin).*
@@ -552,6 +831,7 @@ ${{t.link_ig ? '- **Post de Referência no Instagram:** [Ver Post](' + t.link_ig
         function closeObsidianModal() {{
             document.getElementById('obsidianModal').classList.add('hidden');
             document.getElementById('obsidianModal').classList.remove('flex');
+            stopAudio();
         }}
 
         function copyModalContent() {{
@@ -576,7 +856,7 @@ ${{t.link_ig ? '- **Post de Referência no Instagram:** [Ver Post](' + t.link_ig
             URL.revokeObjectURL(url);
         }}
 
-        // Inicialização
+        // Inicializacao
         renderCatalogo();
     </script>
 </body>
@@ -586,5 +866,4 @@ ${{t.link_ig ? '- **Post de Referência no Instagram:** [Ver Post](' + t.link_ig
 with open(os.path.join(WEB_DIR, "index.html"), "w", encoding="utf-8") as f:
     f.write(html_code)
 
-html_size_mb = os.path.getsize(os.path.join(WEB_DIR, "index.html")) / (1024 * 1024)
-print(f"[4/4] index.html gerado com sucesso! Tamanho final: {html_size_mb:.2f} MB")
+print("[4/4] index.html com Audio In/Out, Auto-Complete e Navegacao Lateral gerado com sucesso!")
