@@ -1,5 +1,197 @@
 [
   {
+    "nome": "LiveStream-Agent-Studio",
+    "caso_uso": "Ferramenta para auxiliar no gerenciamento de transmissões ao vivo no TikTok, fornecendo insights e análises para melhorar a experiência do usuário.",
+    "categoria": "Vídeo, Visão & 3D",
+    "emoji": "📹",
+    "busca_github": "https://github.com/HanyuanWang/LiveStream-Agent-Studio",
+    "link_post": "https://github.com/HanyuanWang/LiveStream-Agent-Studio"
+  },
+  {
+    "nome": "AutoVideo-Agent",
+    "caso_uso": "Automatiza a criação de vídeos a partir de markdown, permitindo renderização reprodutível e provedores de mídia plugáveis.",
+    "categoria": "Vídeo, Visão & 3D",
+    "emoji": "📹",
+    "busca_github": "https://github.com/wangxin6x/AutoVideo-Agent",
+    "link_post": "https://github.com/wangxin6x/AutoVideo-Agent"
+  },
+  {
+    "nome": "dsh-image-gen",
+    "caso_uso": "Gera imagens diretamente em chats do DeepSeek Harness",
+    "categoria": "Vídeo, Visão & 3D",
+    "emoji": "🖼️",
+    "busca_github": "https://github.com/shanliuling/dsh-image-gen",
+    "link_post": "https://github.com/shanliuling/dsh-image-gen"
+  },
+  {
+    "nome": "Solo Skills",
+    "caso_uso": "Automatizar tarefas para empreendedores individuais, aumentando a produtividade sem a necessidade de funcionários.",
+    "categoria": "Automação & Scraping",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/bam-bam-2/solo-skills",
+    "link_post": "https://github.com/bam-bam-2/solo-skills"
+  },
+  {
+    "nome": "Emotion Ball",
+    "caso_uso": "Uma biblioteca de expressões faciais para AI assistentes, permitindo a criação de personagens com emoções dinâmicas.",
+    "categoria": "Voz, Áudio & TTS",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/sam70361/emotion-ball",
+    "link_post": "https://github.com/sam70361/emotion-ball"
+  },
+  {
+    "nome": "Cybermes",
+    "caso_uso": "Ferramenta para segurança ofensiva autônoma, caça a bugs e simulação de ataques cibernéticos.",
+    "categoria": "Multi-Agentes & Frameworks",
+    "emoji": "🔒",
+    "busca_github": "https://github.com/Zyrexnn/Cybermes",
+    "link_post": "https://github.com/Zyrexnn/Cybermes"
+  },
+  {
+    "nome": "Pilot Harness",
+    "caso_uso": "Uma ferramenta inspirada no CodePilot para criar um cliente de desktop e plugins para DeepSeek Harness em várias plataformas.",
+    "categoria": "Dev, Coding & MCP",
+    "emoji": "🚀",
+    "busca_github": "https://github.com/op7418/pilot-harness",
+    "link_post": "https://github.com/op7418/pilot-harness"
+  },
+  {
+    "nome": "source-reading-methodology",
+    "caso_uso": "Método de leitura de código-fonte para entender grandes repositórios de código aberto de forma eficiente.",
+    "categoria": "Dev, Coding & MCP",
+    "emoji": "📚",
+    "busca_github": "https://github.com/itshen/source-reading-methodology",
+    "link_post": "https://github.com/itshen/source-reading-methodology"
+  },
+  {
+    "nome": "Modelprint",
+    "caso_uso": "Ferramenta para identificar e analisar a infraestrutura por trás de APIs compatíveis com OpenAI.",
+    "categoria": "Modelos LLM & Infra",
+    "emoji": "🔍",
+    "busca_github": "https://github.com/unclecode/modelprint",
+    "link_post": "https://github.com/unclecode/modelprint"
+  },
+  {
+    "nome": "Agents Universe",
+    "caso_uso": "Plataforma para compartilhar memória e conhecimento entre agentes inteligentes, permitindo que eles aprendam e trabalhem de forma mais eficiente.",
+    "categoria": "Multi-Agentes & Frameworks",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/agents-universe/agents-universe",
+    "link_post": "https://github.com/agents-universe/agents-universe"
+  },
+  {
+    "nome": "Narralume",
+    "caso_uso": "Ferramenta de escrita de ficção longa assistida por IA para criar e gerenciar histórias.",
+    "categoria": "Geral & Produtividade",
+    "emoji": "📝",
+    "busca_github": "https://github.com/abligail/narralume",
+    "link_post": "https://github.com/abligail/narralume"
+  },
+  {
+    "nome": "Jiaojie Skill",
+    "caso_uso": "Ferramenta de transferência de contexto de IA que permite manter a memória em diferentes janelas, modelos e dispositivos.",
+    "categoria": "Modelos LLM & Infra",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/Jordanwei1/jiaojie-skill",
+    "link_post": "https://github.com/Jordanwei1/jiaojie-skill"
+  },
+  {
+    "nome": "AI Engineering Lab",
+    "caso_uso": "Um curso de engenharia de IA auto-orientado de 24 semanas que aborda Python, aprendizado de máquina, LLMs e mais.",
+    "categoria": "Modelos LLM & Infra",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/zorost/AI-Engineering-Lab",
+    "link_post": "https://github.com/zorost/AI-Engineering-Lab"
+  },
+  {
+    "nome": "Mixamo LLM Mocap",
+    "caso_uso": "Converte vídeos em animações 3D com personagens Mixamo, permitindo a criação de conteúdo personalizado e automatizado.",
+    "categoria": "Vídeo, Visão & 3D",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/squall01337/mixamo-llm-mocap",
+    "link_post": "https://github.com/squall01337/mixamo-llm-mocap"
+  },
+  {
+    "nome": "oc",
+    "caso_uso": "Transforma qualquer site em uma interface de linha de comando compacta para agentes de IA, permitindo navegar na web com centenas de tokens em vez de dezenas de milhares.",
+    "categoria": "Automação & Scraping",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/only-cli/oc",
+    "link_post": "https://github.com/only-cli/oc"
+  },
+  {
+    "nome": "LLM Inference Engineering",
+    "caso_uso": "Aprender engenharia de inferência de LLM passo a passo, desde cache KV, PagedAttention e batching contínuo até vLLM, SGLang e GPUs.",
+    "categoria": "Modelos LLM & Infra",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/amitshekhariitbhu/llm-inference-engineering",
+    "link_post": "https://github.com/amitshekhariitbhu/llm-inference-engineering"
+  },
+  {
+    "nome": "Hermes AI Team",
+    "caso_uso": "Construir uma equipe de agentes de inteligência artificial para automatizar tarefas e melhorar a produtividade.",
+    "categoria": "Multi-Agentes & Frameworks",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/smfworks/hermes-ai-team",
+    "link_post": "https://github.com/smfworks/hermes-ai-team"
+  },
+  {
+    "nome": "OpenFlow",
+    "caso_uso": "Construir fluxos de trabalho de IA multi-agente de forma visual e eficiente.",
+    "categoria": "Multi-Agentes & Frameworks",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/SeeRay11/OpenFlow",
+    "link_post": "https://github.com/SeeRay11/OpenFlow"
+  },
+  {
+    "nome": "Codex Command Center",
+    "caso_uso": "Organizar projetos Codex, tarefas de engenharia, sessões, alterações Git, habilidades e configuração MCP em uma interface de desktop local.",
+    "categoria": "Dev, Coding & MCP",
+    "emoji": "🖥️",
+    "busca_github": "https://github.com/sevensir888/codex-command-center",
+    "link_post": "https://github.com/sevensir888/codex-command-center"
+  },
+  {
+    "nome": "Mediagen",
+    "caso_uso": "Gera imagens e vídeos utilizando inteligência artificial, permitindo a integração com agentes de codificação como Claude Code, Gemini, OpenAI e Kie AI.",
+    "categoria": "Vídeo, Visão & 3D",
+    "emoji": "📹",
+    "busca_github": "https://github.com/Cripacx/mediagen",
+    "link_post": "https://github.com/Cripacx/mediagen"
+  },
+  {
+    "nome": "Open-Sheet",
+    "caso_uso": "Uma estrutura de planilha para agentes que permite escrever modelos em React e exportar arquivos .xlsx dinâmicos.",
+    "categoria": "Dev, Coding & MCP | Multi-Agentes & Frameworks",
+    "emoji": "📊",
+    "busca_github": "https://github.com/lianghsun/open-sheet",
+    "link_post": "https://github.com/lianghsun/open-sheet"
+  },
+  {
+    "nome": "DeepSeek Harness (DSH) para iOS",
+    "caso_uso": "Ferramenta para automatizar e testar aplicativos iOS em simuladores e dispositivos físicos, com recursos de OCR e interação por acessibilidade.",
+    "categoria": "Dev, Coding & MCP",
+    "emoji": "📱",
+    "busca_github": "https://github.com/ZSeven-W/dsh-ios",
+    "link_post": "https://github.com/ZSeven-W/dsh-ios"
+  },
+  {
+    "nome": "x64dbg-mcp-server",
+    "caso_uso": "Permite controlar o depurador x64dbg de forma programática através de HTTP, permitindo a integração com assistentes de IA compatíveis com MCP.",
+    "categoria": "Dev, Coding & MCP",
+    "emoji": "🔍",
+    "busca_github": "https://github.com/duty1g/x64dbg-mcp-server",
+    "link_post": "https://github.com/duty1g/x64dbg-mcp-server"
+  },
+  {
+    "nome": "OpenBot",
+    "caso_uso": "Ferramenta de automação que permite criar agentes de inteligência artificial que executam tarefas em um ambiente virtual, com registro de ações.",
+    "categoria": "Automação & Scraping",
+    "emoji": "🤖",
+    "busca_github": "https://github.com/CopilotKit/OpenBot",
+    "link_post": "https://github.com/CopilotKit/OpenBot"
+  },
+  {
     "nome": "\"2-line SMS\" AI model",
     "caso_uso": "Gerenciamento de vendas e aumento de receita.",
     "origem": "Reels/Vídeos Salvos",
