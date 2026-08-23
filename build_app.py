@@ -1,7 +1,8 @@
 import json
 import os
 
-with open(r"G:\Meu Drive\Suno\AERON GENESIS\catalogo_opensource_limpo.json", "r", encoding="utf-8") as f:
+tools_path = "tools.json" if os.path.exists("tools.json") else r"G:\Meu Drive\Suno\AERON GENESIS\catalogo_opensource_limpo.json"
+with open(tools_path, "r", encoding="utf-8") as f:
     tools = json.load(f)
 
 def categorizar(nome, caso_uso):
