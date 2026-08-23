@@ -64,7 +64,7 @@ def categorizar(nome, caso_uso):
         return "Video, Visao, 3D & GIS", "👁️"
     elif any(k in texto for k in ["crawlee", "scrape", "scraping", "n8n", "zapier", "pipefy", "workflow", "automacao", "apify", "crawler", "bot", "fluxo", "automation"]):
         return "Automacao & Scraping", "⚡"
-    elif any(k in texto for k in ["ads", "marketing", "meta ads", "vendas", "funil", "trafego", "lead", "negocio", "imobiliario", "receita", "sms", "crm", "real estate"]):
+    elif any(k in texto for k in ["ads", "marketing", "meta ads", "vendas", "funil", "trafego", "lead", "negocio", "imobiliario", "receita", "sms", "crm", "real estate", "trade", "trading", "finance", "crypto"]):
         return "Marketing, CRM & Negocios", "📈"
     elif any(k in texto for k in ["llm", "claude", "gemini", "kimi", "qwen", "glm", "openrouter", "airllm", "perplexity", "deepseek", "mistral", "anthropic", "gpt", "model", "embedding", "vector", "transformer"]):
         return "Modelos LLM & IA", "🧠"
@@ -91,31 +91,16 @@ print(f"[3/4] Total Combinado de Ferramentas: {len(merged_tools)}")
 with open(os.path.join(WEB_DIR, "tools.json"), "w", encoding="utf-8") as f:
     json.dump(merged_tools, f, ensure_ascii=False)
 
-with open(os.path.join(WEB_DIR, "catalogo_mobile.csv"), "w", encoding="utf-8-sig", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["Nome", "Caso de Uso", "Categoria", "Linguagem", "Estrelas", "Origem", "Link Instagram", "GitHub / URL"])
-    for t in merged_tools:
-        writer.writerow([
-            t.get("nome", ""),
-            t.get("caso_uso", ""),
-            t.get("categoria", ""),
-            t.get("linguagem", ""),
-            t.get("estrelas", 0),
-            t.get("origem", ""),
-            t.get("link_ig", ""),
-            t.get("github_search", "")
-        ])
-
 tools_json_str = json.dumps(merged_tools, ensure_ascii=False)
 
-# 4. Gera index.html Completo com Auto-Complete, Audio In/Out e Scroll de Categorias
+# 4. Gera index.html Completo com Motor de Busca Semantica e NLP
 html_code = f"""<!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenSource Hunter | Rodrigo Borin</title>
-    <meta name="description" content="Catalogo Mestre e Motor de Busca de {len(merged_tools):,} Ferramentas Open Source e IA com Audio e Auto-Complete por Rodrigo Borin.">
+    <meta name="description" content="Catalogo Mestre e Motor de Busca Semantica de {len(merged_tools):,} Ferramentas Open Source e IA por Rodrigo Borin.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,7 +170,7 @@ html_code = f"""<!DOCTYPE html>
                 <div>
                     <div class="flex items-center space-x-2">
                         <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white">OpenSource Hunter</h1>
-                        <span class="text-[10px] uppercase font-bold tracking-widest bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full">v2.6 Voice & Search</span>
+                        <span class="text-[10px] uppercase font-bold tracking-widest bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full">v2.7 Semantic Search</span>
                     </div>
                     <p class="text-xs text-slate-400 font-medium">rodrigoborin.com • <span class="text-emerald-400 font-semibold" id="totalHeaderCount">{len(merged_tools):,} Ferramentas</span></p>
                 </div>
@@ -205,10 +190,10 @@ html_code = f"""<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- Search Bar com Auto-Complete e Audio IN (Microfone) -->
+        <!-- Search Bar com Busca Semantica, Auto-Complete e Audio IN (Microfone) -->
         <div class="max-w-7xl mx-auto mt-3 relative" id="searchBarContainer">
             <div class="relative flex items-center">
-                <input type="text" id="mainSearchInput" autocomplete="off" placeholder="Fale ou digite (ex: AI agent, scrapers, FastAPI, CRM, Rust, TTS)..." 
+                <input type="text" id="mainSearchInput" autocomplete="off" placeholder="Pesquise por linguagem natural (ex: 'estou fazendo um sistema de trades', 'scrapers de imoveis', 'agentes de IA')..." 
                     class="w-full bg-dark-900 border border-dark-750 text-white placeholder-slate-400 text-sm sm:text-base rounded-xl pl-11 pr-32 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition shadow-inner">
                 <div class="absolute left-3.5 text-slate-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +245,10 @@ html_code = f"""<!DOCTYPE html>
         <!-- TAB 1: Acervo Mestre de Ferramentas -->
         <section id="catalogoSection">
             <div class="flex items-center justify-between text-xs text-slate-400 mb-4 px-1">
-                <span id="resultsInfo" class="font-medium">Carregando acervo...</span>
+                <div class="flex items-center space-x-2">
+                    <span id="resultsInfo" class="font-medium">Carregando acervo...</span>
+                    <span id="semanticBadge" class="hidden text-[10px] bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full font-bold">🧠 Busca Semantica Ativa</span>
+                </div>
                 <div class="flex items-center space-x-3">
                     <span id="audioPlayingIndicator" class="hidden items-center gap-1.5 bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2.5 py-0.5 rounded-full font-semibold animate-pulse">
                         <span>🔊</span> Falando...
@@ -268,7 +256,7 @@ html_code = f"""<!DOCTYPE html>
                     </span>
                     <div class="flex items-center space-x-1.5">
                         <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-slate-400">PostgreSQL + Instagram + GitHub</span>
+                        <span class="text-slate-400">PostgreSQL + Vetorial + GitHub</span>
                     </div>
                 </div>
             </div>
@@ -368,7 +356,7 @@ html_code = f"""<!DOCTYPE html>
         <p class="mt-1">Deploy automatizado via Vercel • Sincronizado com PostgreSQL Local & Obsidian</p>
     </footer>
 
-    <!-- Scripts de Interatividade, Voz, Auto-Complete e Paginacao -->
+    <!-- Scripts de Interatividade, Voz, Auto-Complete e Busca Semantica -->
     <script>
         const allTools = {tools_json_str};
         let currentTab = 'catalogo';
@@ -380,6 +368,37 @@ html_code = f"""<!DOCTYPE html>
         let isSpeaking = false;
         let isListening = false;
         let recognition = null;
+
+        // Dicionario de Stopwords em Portugues
+        const STOPWORDS = new Set([
+            'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas', 'de', 'do', 'da', 'dos', 'das',
+            'em', 'no', 'na', 'nos', 'nas', 'por', 'para', 'com', 'sem', 'sob', 'sobre',
+            'que', 'qual', 'quais', 'quem', 'como', 'onde', 'quando', 'por que', 'porque',
+            'eu', 'tu', 'ele', 'ela', 'nos', 'vos', 'eles', 'elas', 'me', 'te', 'se', 'lhe',
+            'estou', 'fazendo', 'fazer', 'criar', 'construir', 'preciso', 'ajude', 'ajudar',
+            'quero', 'gostaria', 'sistema', 'ferramenta', 'projeto', 'aplicacao', 'app', 'site'
+        ]);
+
+        // Mapa de Sinonimos e Expansao Semantica
+        const SYNONYMS = {{
+            'trade': ['trading', 'trades', 'finance', 'crypto', 'stock', 'exchange', 'market', 'quant', 'ccxt', 'bitcoin', 'bot', 'binance', 'investimento', 'backtest'],
+            'trades': ['trading', 'trade', 'finance', 'crypto', 'stock', 'exchange', 'market', 'quant', 'ccxt', 'bot'],
+            'trading': ['trade', 'trades', 'finance', 'crypto', 'stock', 'exchange', 'market', 'quant', 'ccxt'],
+            'investimento': ['finance', 'crypto', 'stock', 'market', 'trading', 'trade'],
+            'imovel': ['imobiliario', 'real estate', 'gis', 'lote', 'terreno', 'mapa', 'cad', 'blender', 'property'],
+            'imoveis': ['imobiliario', 'real estate', 'gis', 'lote', 'terreno', 'mapa', 'cad', 'blender', 'property'],
+            'imobiliario': ['real estate', 'gis', 'lote', 'terreno', 'mapa', 'cad', 'blender', 'property', 'twenty'],
+            'lote': ['gis', 'map', 'zoneamento', 'cad', 'blender', 'real estate', 'terreno', 'florianopolis'],
+            'terreno': ['gis', 'map', 'zoneamento', 'cad', 'blender', 'real estate', 'lote'],
+            'raspagem': ['scraper', 'scraping', 'crawler', 'crawlee', 'playwright', 'puppeteer', 'bs4', 'extract'],
+            'raspar': ['scraper', 'scraping', 'crawler', 'crawlee', 'playwright', 'puppeteer', 'bs4', 'extract'],
+            'extrair': ['scraper', 'scraping', 'crawler', 'crawlee', 'extractor', 'parser'],
+            'agente': ['agent', 'multi-agent', 'langchain', 'swarm', 'crewai', 'autogen', 'langsmith'],
+            'agentes': ['agent', 'multi-agent', 'langchain', 'swarm', 'crewai', 'autogen', 'langsmith'],
+            'voz': ['tts', 'audio', 'fala', 'speech', 'whisper', 'elevenlabs', 'asr', 'sound'],
+            'visao': ['vision', 'video', 'imagem', 'opencv', 'yolo', '3d', 'render', 'camera'],
+            'codigo': ['coding', 'code', 'ide', 'mcp', 'cli', 'compiler', 'terminal', 'dev']
+        }};
 
         // Categorias e contagem
         const categoryCounts = {{}};
@@ -410,6 +429,83 @@ html_code = f"""<!DOCTYPE html>
         }}
 
         // ==========================================
+        // MOTOR DE BUSCA SEMANTICA & RELEVANCIA NLP
+        // ==========================================
+        function tokenizeQuery(rawQuery) {{
+            const rawTokens = rawQuery.toLowerCase()
+                .replace(/[^a-z0-9áéíóúâêîôûãõç\s_-]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length > 1);
+
+            const keywords = rawTokens.filter(w => !STOPWORDS.has(w));
+            
+            // Expansao semantica com sinonimos
+            const expandedKeywords = new Set(keywords);
+            keywords.forEach(k => {{
+                // Stem simples (remove 's' plural)
+                const stem = k.endsWith('s') && k.length > 3 ? k.slice(0, -1) : k;
+                expandedKeywords.add(stem);
+
+                if (SYNONYMS[k]) {{
+                    SYNONYMS[k].forEach(syn => expandedKeywords.add(syn));
+                }}
+                if (SYNONYMS[stem]) {{
+                    SYNONYMS[stem].forEach(syn => expandedKeywords.add(syn));
+                }}
+            }});
+
+            return {{
+                rawTokens: rawTokens,
+                coreTokens: keywords.length > 0 ? keywords : rawTokens,
+                expandedTokens: Array.from(expandedKeywords)
+            }};
+        }}
+
+        function calculateRelevance(tool, tokenData, exactQuery) {{
+            const name = tool.nome.toLowerCase();
+            const desc = (tool.caso_uso || '').toLowerCase();
+            const cat = tool.categoria.toLowerCase();
+            const lang = (tool.linguagem || '').toLowerCase();
+            const stars = tool.estrelas || 0;
+
+            let score = 0;
+
+            // 1. Match exato da frase completa
+            if (exactQuery && (name.includes(exactQuery) || desc.includes(exactQuery))) {{
+                score += 100;
+            }}
+
+            // 2. Pontuacao por Tokens Principais
+            tokenData.coreTokens.forEach(tok => {{
+                if (name === tok) score += 50;
+                else if (name.includes(tok)) score += 20;
+                
+                if (desc.includes(tok)) score += 10;
+                if (cat.includes(tok)) score += 8;
+                if (lang.includes(tok)) score += 12;
+            }});
+
+            // 3. Pontuacao por Sinonimos e Conceitos Semanticos
+            tokenData.expandedTokens.forEach(tok => {{
+                if (name.includes(tok)) score += 8;
+                if (desc.includes(tok)) score += 5;
+                if (cat.includes(tok)) score += 4;
+            }});
+
+            // 4. Boost para estrelas e curadoria VIP
+            if (score > 0) {{
+                if (tool.origem && tool.origem.includes('Curadoria')) {{
+                    score += 5;
+                }}
+                if (stars > 0) {{
+                    score += Math.min(Math.log10(stars) * 2, 10);
+                }}
+            }}
+
+            return score;
+        }}
+
+        // ==========================================
         // AUTO-COMPLETE NA BUSCA
         // ==========================================
         const searchInput = document.getElementById('mainSearchInput');
@@ -423,10 +519,20 @@ html_code = f"""<!DOCTYPE html>
                 return;
             }}
 
-            const nameMatches = allTools.filter(t => t.nome.toLowerCase().includes(q)).slice(0, 5);
-            const catMatches = Object.keys(categoryCounts).filter(c => c.toLowerCase().includes(q)).slice(0, 2);
+            const tokenData = tokenizeQuery(q);
+            const scored = [];
+            allTools.forEach(t => {{
+                const score = calculateRelevance(t, tokenData, q);
+                if (score > 0) {{
+                    scored.push({{ tool: t, score: score }});
+                }}
+            }});
 
-            if (nameMatches.length === 0 && catMatches.length === 0) {{
+            scored.sort((a, b) => b.score - a.score);
+            const topTools = scored.slice(0, 5).map(s => s.tool);
+            const catMatches = Object.keys(categoryCounts).filter(c => c.toLowerCase().includes(q) || tokenData.expandedTokens.some(t => c.toLowerCase().includes(t))).slice(0, 2);
+
+            if (topTools.length === 0 && catMatches.length === 0) {{
                 dropdown.classList.add('hidden');
                 return;
             }}
@@ -453,7 +559,7 @@ html_code = f"""<!DOCTYPE html>
             }});
 
             // Ferramentas sugeridas
-            nameMatches.forEach(t => {{
+            topTools.forEach(t => {{
                 const item = document.createElement('div');
                 item.className = "p-3 hover:bg-dark-800 cursor-pointer flex items-center justify-between text-slate-200 transition";
                 item.innerHTML = `
@@ -553,7 +659,7 @@ html_code = f"""<!DOCTYPE html>
             const btn = document.getElementById('voiceSearchBtn');
             btn.classList.remove('mic-active');
             document.getElementById('micLabel').innerText = 'Voz';
-            searchInput.placeholder = 'Fale ou digite (ex: AI agent, scrapers, FastAPI, CRM, Rust, TTS)...';
+            searchInput.placeholder = 'Pesquise por linguagem natural (ex: \'estou fazendo um sistema de trades\')...';
         }}
 
         // ==========================================
@@ -657,17 +763,32 @@ html_code = f"""<!DOCTYPE html>
             const grid = document.getElementById('toolsGrid');
             grid.innerHTML = '';
 
-            const query = searchQuery.toLowerCase().trim();
-            filteredToolsCache = allTools.filter(t => {{
-                const matchCat = currentCategory === 'TODAS' || t.categoria === currentCategory;
-                const matchSearch = query === '' || 
-                    t.nome.toLowerCase().includes(query) || 
-                    (t.caso_uso && t.caso_uso.toLowerCase().includes(query)) ||
-                    (t.linguagem && t.linguagem.toLowerCase().includes(query));
-                return matchCat && matchSearch;
-            }});
+            const query = searchQuery.trim();
+            const semanticBadge = document.getElementById('semanticBadge');
 
-            document.getElementById('resultsInfo').innerText = `Mostrando ${{Math.min(visibleCount, filteredToolsCache.length).toLocaleString()}} de ${{filteredToolsCache.length.toLocaleString()}} ferramentas`;
+            if (!query) {{
+                semanticBadge.classList.add('hidden');
+                filteredToolsCache = allTools.filter(t => currentCategory === 'TODAS' || t.categoria === currentCategory);
+            }} else {{
+                semanticBadge.classList.remove('hidden');
+                const tokenData = tokenizeQuery(query);
+                const scored = [];
+
+                allTools.forEach(t => {{
+                    const matchCat = currentCategory === 'TODAS' || t.categoria === currentCategory;
+                    if (matchCat) {{
+                        const score = calculateRelevance(t, tokenData, query.toLowerCase());
+                        if (score > 0) {{
+                            scored.push({{ tool: t, score: score }});
+                        }}
+                    }}
+                }});
+
+                scored.sort((a, b) => b.score - a.score);
+                filteredToolsCache = scored.map(s => s.tool);
+            }}
+
+            document.getElementById('resultsInfo').innerText = `Mostrando ${{Math.min(visibleCount, filteredToolsCache.length).toLocaleString()}} de ${{filteredToolsCache.length.toLocaleString()}} ferramentas encontradas`;
 
             const loadMoreBtn = document.getElementById('loadMoreContainer');
             if (filteredToolsCache.length > visibleCount) {{
@@ -680,8 +801,8 @@ html_code = f"""<!DOCTYPE html>
                 grid.innerHTML = `
                     <div class="col-span-full py-16 text-center text-slate-400">
                         <div class="text-4xl mb-2">🔍</div>
-                        <p class="font-bold text-base text-white">Nenhum projeto encontrado</p>
-                        <p class="text-xs text-slate-400 mt-1">Tente outros termos ou fale pelo microfone.</p>
+                        <p class="font-bold text-base text-white">Nenhum projeto correspondente encontrado</p>
+                        <p class="text-xs text-slate-400 mt-1">Tente palavras-chave como 'trades', 'scraping', 'LLM' ou fale pelo microfone.</p>
                     </div>
                 `;
                 return;
@@ -767,7 +888,7 @@ html_code = f"""<!DOCTYPE html>
             }}
         }});
 
-        // Input Search Listener com Debounce e Auto-Complete
+        // Input Search Listener com Debounce e Busca Semantica
         let searchDebounce;
         searchInput.addEventListener('input', (e) => {{
             clearTimeout(searchDebounce);
@@ -866,4 +987,4 @@ ${{t.link_ig ? '- **Post de Referencia no Instagram:** [Ver Post](' + t.link_ig 
 with open(os.path.join(WEB_DIR, "index.html"), "w", encoding="utf-8") as f:
     f.write(html_code)
 
-print("[4/4] index.html com Audio In/Out, Auto-Complete e Navegacao Lateral gerado com sucesso!")
+print("[4/4] index.html com Busca Semantica, NLP e Expansao de Sinonimos gerado com sucesso!")
