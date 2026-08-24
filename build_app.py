@@ -433,8 +433,8 @@ html_code = f"""<!DOCTYPE html>
         // ==========================================
         function tokenizeQuery(rawQuery) {{
             const rawTokens = rawQuery.toLowerCase()
-                .replace(/[^a-z0-9áéíóúâêîôûãõç\s_-]/g, ' ')
-                .split(/\s+/)
+                .replace(/[^a-z0-9áéíóúâêîôûãõç\\s_-]/g, ' ')
+                .split(/\\s+/)
                 .filter(w => w.length > 1);
 
             const keywords = rawTokens.filter(w => !STOPWORDS.has(w));
@@ -659,7 +659,7 @@ html_code = f"""<!DOCTYPE html>
             const btn = document.getElementById('voiceSearchBtn');
             btn.classList.remove('mic-active');
             document.getElementById('micLabel').innerText = 'Voz';
-            searchInput.placeholder = 'Pesquise por linguagem natural (ex: \'estou fazendo um sistema de trades\')...';
+            searchInput.placeholder = "Pesquise por linguagem natural (ex: 'estou fazendo um sistema de trades')...";
         }}
 
         // ==========================================
