@@ -902,6 +902,19 @@ html_code = f"""<!DOCTYPE html>
             }}, 150);
         }});
 
+        searchInput.addEventListener('keydown', (e) => {{
+            if (e.key === 'Enter') {{
+                e.preventDefault();
+                clearTimeout(searchDebounce);
+                searchQuery = searchInput.value;
+                visibleCount = 60;
+                dropdown.classList.add('hidden');
+                document.getElementById('clearSearchBtn').classList.toggle('hidden', !searchQuery);
+                renderCatalogo();
+                searchInput.blur();
+            }}
+        }});
+
         function clearSearch() {{
             searchInput.value = '';
             searchQuery = '';
